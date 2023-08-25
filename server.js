@@ -1,4 +1,5 @@
 const genres = require('./Routes/genres');
+const customers = require('./Routes/customers');
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -11,6 +12,7 @@ async function connectDB() {
 
 app.use(express.json());
 app.use('/api/genres', genres);
+app.use('/api/customers', customers);
 
 
 const PORT = process.env.PORT || 3000;
