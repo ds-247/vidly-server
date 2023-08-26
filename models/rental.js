@@ -43,16 +43,17 @@ const Rental = new mongoose.model("Rental", rentalSchema);
 async function validateRental(rental) {
   const schema = Joi.object({
     customerId: Joi.string()
+      .required()
       .regex(/^[0-9a-fA-F]{24}$/)
       .message("Customer Id must be a valid ObjectId"),
     movieId: Joi.string()
+      .required()
       .regex(/^[0-9a-fA-F]{24}$/)
       .message("Movie Id must be a valid ObjectId"),
   });
 
   try {
     await schema.validateAsync(rental);
-    
   } catch (error) {
     return error;
   }
