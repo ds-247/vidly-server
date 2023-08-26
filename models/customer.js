@@ -27,6 +27,20 @@ const customerSchema = new mongoose.Schema({
 
 const Customer = new mongoose.model("Customer", customerSchema);
 
+async function validateCustomerId(customerId) {
+  const schema = Joi.object({
+    customerId: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .message("Customer Id must be valid objectId"),
+  });
+
+  try {
+    await schema.validateAsync({ customerId });
+  } catch (error) {
+    return error;
+  }
+}
+
 async function validateCustomer(customer) {
   const schema = Joi.object({
     name: Joi.string().min(3).required(),
@@ -35,11 +49,14 @@ async function validateCustomer(customer) {
   });
 
   try {
-    return await schema.validateAsync(customer);
+    // console.log(customer)
+    await schema.validateAsync(customer);
   } catch (error) {
-    throw error;
+    console.log(error);
+    return error;
   }
 }
 
 exports.Customer = Customer;
 exports.validateCustomer = validateCustomer;
+exports.validateCustomerId = validateCustomerId;
