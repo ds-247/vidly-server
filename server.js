@@ -1,5 +1,8 @@
+require("express-async-errors");
 require("dotenv").config();
 const secretKey = process.env.SECRET_KEY;
+const logger = require("./logger");
+const error = require("./middleware/error");
 const users = require("./Routes/users");
 const auth = require("./Routes/auth");
 const genres = require("./Routes/genres");
@@ -10,7 +13,18 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 
-if(!secretKey){
+process.on('uncaughtException',(ex)=>{
+  console.log("We got an unCaught x ape sun...");
+  logger.error(ex.message,ex);
+});
+
+process.on('unhandledRejection',(ex)=>{
+  console.log("We got an unCaught x ape sun...");
+  logger.error(ex.message,ex);
+});
+
+
+if (!secretKey) {
   console.error("FATAL ERROR: jwtPrivateKey is not defined.");
   process.exit(1);
 }
@@ -30,6 +44,7 @@ app.use("/api/genres", genres);
 app.use("/api/movies", movies);
 app.use("/api/rentals", rentals);
 app.use("/api/customers", customers);
+app.use(error);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`server started at port ${PORT}`));
+app.listen(PORT, () => logger.info(`server started at port ${PORT}`));
