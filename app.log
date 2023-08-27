@@ -1,10 +1,6 @@
-[2023-08-27T07:08:47.550Z] [[31merror[39m] hdlajflsjflksjflksjfa hdlajflsjflksjflksjfa
-[2023-08-27T07:08:54.469Z] [[32minfo[39m] server started at port 3000
-[2023-08-27T07:12:12.391Z] [[32minfo[39m] server started at port 3000
-[2023-08-27T07:12:17.018Z] [[32minfo[39m] server started at port 3000
-[2023-08-27T07:12:19.337Z] [[32minfo[39m] server started at port 3000
-[2023-08-27T07:12:28.595Z] [[32minfo[39m] server started at port 3000
-[2023-08-27T07:12:30.083Z] [[32minfo[39m] server started at port 3000
-[2023-08-27T07:12:32.107Z] [[32minfo[39m] server started at port 3000
-[2023-08-27T07:14:49.710Z] [[32minfo[39m] server started at port 3000
-[2023-08-27T07:14:51.844Z] [[32minfo[39m] server started at port 3000
+[2023-08-27T07:33:46.840Z] [[31merror[39m] connect ECONNREFUSED 127.0.0.1:27017 connect ECONNREFUSED 127.0.0.1:27017
+[2023-08-27T07:33:56.523Z] [[31merror[39m] Operation `movies.find()` buffering timed out after 10000ms Operation `movies.find()` buffering timed out after 10000ms
+[2023-08-27T07:34:40.934Z] [[32minfo[39m] server started at port 3000
+[2023-08-27T07:35:10.945Z] [[31merror[39m] connect ECONNREFUSED 127.0.0.1:27017 connect ECONNREFUSED 127.0.0.1:27017
+[2023-08-27T07:36:24.772Z] [[32minfo[39m] server started at port 3000
+[2023-08-27T07:36:24.783Z] [[32minfo[39m] Connected to DB Successfully....
