@@ -1,6 +1,8 @@
 const logger = require("./logger");
 const mongoose = require("mongoose");
 
+const conncection_string = process.env.DB_CONNECTION_STRING;
+
 module.exports = function () {
   connectDB()
     .then(() => logger.info("Connected to DB Successfully...."))
@@ -8,5 +10,5 @@ module.exports = function () {
 };
 
 async function connectDB() {
-  await mongoose.connect("mongodb://127.0.0.1:27017/VIDLY");
+  await mongoose.connect(conncection_string);
 }
