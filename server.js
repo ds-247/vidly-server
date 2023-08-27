@@ -1,3 +1,5 @@
+require("dotenv").config();
+const secretKey = process.env.SECRET_KEY;
 const users = require("./Routes/users");
 const auth = require("./Routes/auth");
 const genres = require("./Routes/genres");
@@ -7,6 +9,11 @@ const customers = require("./Routes/customers");
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
+
+if(!secretKey){
+  console.error("FATAL ERROR: jwtPrivateKey is not defined.");
+  process.exit(1);
+}
 
 connectDB()
   .then(() => console.log("Connected to DB Successfully...."))

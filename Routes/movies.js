@@ -1,3 +1,4 @@
+const auth = require('../middleware/auth');
 const { Movie, validateMovie, validateMovieId } = require("../models/movie");
 const { Genre } = require("../models/genre");
 const express = require("express");
@@ -17,7 +18,7 @@ router.get("/:id", async (req, res) => {
   res.status(200).send(customer);
 });
 
-router.post("/", async (req, res) => {
+router.post("/", auth, async (req, res) => {
   const error = await validateMovie(req.body);
   if (error) res.status(400).send(error.details[0].message);
 
@@ -35,7 +36,7 @@ router.post("/", async (req, res) => {
   res.send(result);
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   const err = await validateMovieId(req.params.id);
   if (err) return res.status(400).send("Invalid Movie Id...");
 
@@ -61,7 +62,7 @@ router.put("/:id", async (req, res) => {
   res.send(movie);
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   const err = await validateMovieId(req.params.id);
   if (err) return res.status(400).send(err.details[0].message);
 
