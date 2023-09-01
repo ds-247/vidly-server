@@ -1,4 +1,5 @@
-const auth = require('../middleware/auth');
+const auth = require("../middleware/auth");
+const admin = require("../middleware/admin");
 const { Movie, validateMovie, validateMovieId } = require("../models/movie");
 const { Genre } = require("../models/genre");
 const express = require("express");
@@ -13,9 +14,9 @@ router.get("/:id", async (req, res) => {
   const err = await validateMovieId(req.params.id);
   if (err) return res.status(400).send("Invalid Movie Id...");
 
-  const customer = await Movie.find({ _id: req.params.id });
-  if (!customer) res.status(400).send("Movie doesn't existed...");
-  res.status(200).send(customer);
+  const movie = await Movie.findById(req.params.id);
+  if (!movie) res.status(400).send("Movie doesn't existed...");
+  res.status(200).send(movie);
 });
 
 router.post("/", auth, async (req, res) => {
@@ -48,13 +49,17 @@ router.put("/:id", auth, async (req, res) => {
   if (error) return res.status(400).send(error.details[0].message);
 
   const genre = await Genre.findById(req.body.genreId);
-  if (!genre) res.status(400).send(err.details[0].message);
+  if (!genre) return res.status(400).send("Invalid Genre id ....");
+
+  const likedValue =
+    req.body.liked !== undefined ? req.body.liked : movie.liked;
 
   movie.set({
     title: req.body.title,
     genre: genre,
     dailyRentalRate: req.body.dailyRentalRate,
     numberInStock: req.body.numberInStock,
+    liked: likedValue,
   });
 
   await movie.save();

@@ -1,6 +1,5 @@
-const Joi = require('joi');
-const bcrypt = require("bcrypt");
-const { User } = require("../models/user");
+const Joi = require("joi");
+const { User, checkPassword } = require("../models/user");
 const express = require("express");
 const router = express.Router();
 const _ = require("lodash");
@@ -12,12 +11,21 @@ router.post("/", async (req, res) => {
   let user = await User.findOne({ email: req.body.email });
   if (!user) return res.status(400).send("Invalid user name or password...");
 
-  const validPassword = await bcrypt.compare(req.body.password,user.password);
-  if(!validPassword) return res.status(400).send("Invalid user name or password...");
+  const inputPassword = req.body.password;
+  const storedHashedPassword = user.password;
 
-  const token = user.generateAuthToken();
-
-  res.send({ token });
+  checkPassword(inputPassword, storedHashedPassword)
+    .then((isMatch) => {
+      if (isMatch) {
+        const token = user.generateAuthToken();
+        res.send({ token });
+      } else {
+        return res.status(400).send("Invalid user name or password...");
+      }
+    })
+    .catch((error) => {
+      logger.error("Error checking password:", error);
+    });
 });
 
 async function validateUser(user) {

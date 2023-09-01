@@ -1,14 +1,15 @@
-const auth = require('../middleware/auth');
-const bcrypt = require("bcrypt");
-const { User, validateUser } = require("../models/user");
+const logger = require("../startup/logger");
+const auth = require("../middleware/auth");
+
+const { User, validateUser, hashPassword } = require("../models/user");
 const express = require("express");
 const router = express.Router();
 const _ = require("lodash");
 
-router.get("/me", auth, async (req,res)=>{
-  const user = await User.findById(req.user._id).select('-password');
+router.get("/me", auth, async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password");
   res.send(user);
-})
+});
 
 router.post("/", async (req, res) => {
   const error = await validateUser(req.body);
@@ -19,13 +20,20 @@ router.post("/", async (req, res) => {
 
   user = new User(_.pick(req.body, ["name", "password", "email"]));
 
-  const saltRounds = 10;
-  user.password = await bcrypt.hash(user.password, saltRounds);
+  const plaintextPassword = req.body.password;
+  try {
+    user.password = await hashPassword(plaintextPassword);
+    await user.save();
 
-  await user.save(); 
-
-  const token = user.generateAuthToken();
-  res.header('x-auth-token',token).send(_.pick(user, ["name", "email"]));
+    const token = user.generateAuthToken();
+    res
+      .header("x-auth-token", token)
+      .header("access-control-expose-headers", "x-auth-token")
+      .send(_.pick(user, ["name", "email"]));
+  } catch (error) {
+    logger.error("Error hashing password:", error);
+    return res.status(500).send("Something Wrong happened Try again");
+  }
 });
 
 module.exports = router;

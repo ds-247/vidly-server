@@ -1,6 +1,10 @@
-const { Customer, validateCustomer, validateCustomerId } = require("../models/customer");
 const express = require("express");
 const router = express.Router();
+const {
+  Customer,
+  validateCustomer,
+  validateCustomerId,
+} = require("../models/customer");
 
 router.get("/", async (req, res) => {
   const allCustomers = await Customer.find().sort("name").select("name phone");

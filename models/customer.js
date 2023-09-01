@@ -49,10 +49,8 @@ async function validateCustomer(customer) {
   });
 
   try {
-    // console.log(customer)
     await schema.validateAsync(customer);
   } catch (error) {
-    console.log(error);
     return error;
   }
 }

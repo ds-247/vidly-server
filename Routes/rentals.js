@@ -50,10 +50,9 @@ router.post("/", async (req, res) => {
 
     res.send(newRental);
   } catch (error) {
-    console.log(error.message); // Log the error message
     await session.abortTransaction();
     session.endSession();
-    res.status(400).send(error.message); // Send a proper error response
+    res.status(400).send(error.message);
   }
 });
 

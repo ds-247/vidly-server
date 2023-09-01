@@ -26,6 +26,10 @@ const movieSchema = new mongoose.Schema({
     max: 100,
     required: true,
   },
+  liked: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const Movie = new mongoose.model("Movie", movieSchema);
@@ -48,8 +52,9 @@ async function validateMovie(movie) {
   const schema = Joi.object({
     title: Joi.string().min(3).required(),
     genreId: Joi.string().required(),
-    dailyRentalRate: Joi.number().integer().min(0).max(500).required(),
-    numberInStock: Joi.number().min(0).max(100),
+    dailyRentalRate: Joi.number().min(0).max(500).required(),
+    numberInStock: Joi.number().integer().min(0).max(100),
+    liked: Joi.boolean(),
   });
 
   try {

@@ -1,5 +1,5 @@
-const auth = require('../middleware/auth');
-const admin = require('../middleware/admin');
+const auth = require("../middleware/auth");
+const admin = require("../middleware/admin");
 const { Genre, validateGenre, validateGenreId } = require("../models/genre");
 const express = require("express");
 const router = express.Router();
@@ -14,12 +14,12 @@ router.get("/:id", async (req, res) => {
   if (error) return res.status(400).send(err.details[0].message);
 
   const genre = await Genre.find({ _id: req.params.id });
-  if (!genre)return  res.status(400).send("Genre doesn't existed...");
+  if (!genre) return res.status(400).send("Genre doesn't existed...");
 
   res.status(200).send(genre);
 });
 
-router.post("/", auth, async (req, res) => {
+router.post("/", async (req, res) => {
   const error = await validateGenre(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -31,15 +31,16 @@ router.post("/", auth, async (req, res) => {
   res.send(result);
 });
 
-router.put("/:id", auth, async (req, res) => {
+router.put("/:id", async (req, res) => {
   const err = await validateGenreId(req.params.id);
-  if (err)return res.status(400).send(err.details[0].message);
+  if (err) return res.status(400).send(err.details[0].message);
 
   const genre = await Genre.findById(req.params.id);
-  if (!genre)return res.status(404).send("The genre with the given ID was not found.");
+  if (!genre)
+    return res.status(404).send("The genre with the given ID was not found.");
 
   const error = await validateGenre(req.body);
-  if (error)return res.status(400).send(error.details[0].message);
+  if (error) return res.status(400).send(error.details[0].message);
 
   genre.set({
     name: req.body.name,
@@ -50,10 +51,10 @@ router.put("/:id", auth, async (req, res) => {
   res.send(genre);
 });
 
-router.delete("/:id", [auth, admin], async (req, res) => {
+router.delete("/:id", async (req, res) => {
   const err = await validateGenreId(req.params.id);
   if (err) return res.status(400).send(err.details[0].message);
-  
+
   const genre = await Genre.findByIdAndDelete(req.params.id);
   if (!genre)
     return res.status(404).send("The genre with the given ID was not found.");

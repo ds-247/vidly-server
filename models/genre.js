@@ -18,7 +18,7 @@ async function validateGenreId(genreId) {
   });
 
   try {
-    await schema.validateAsync({genreId});
+    await schema.validateAsync({ genreId });
   } catch (error) {
     return error;
   }
