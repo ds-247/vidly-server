@@ -67,7 +67,7 @@ router.put("/:id", auth, async (req, res) => {
   res.send(movie);
 });
 
-router.delete("/:id", auth, async (req, res) => {
+router.delete("/:id", [auth, admin], async (req, res) => {
   const err = await validateMovieId(req.params.id);
   if (err) return res.status(400).send(err.details[0].message);
 
