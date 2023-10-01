@@ -1,4 +1,6 @@
 const Joi = require("joi");
+// const { Movie } = require("../models/movie");
+// const { Rental } = require("../models/rental");
 const jwt = require("jsonwebtoken");
 const secretKey = process.env.SECRET_KEY;
 const mongoose = require("mongoose");
@@ -20,18 +22,68 @@ const userSchema = new mongoose.Schema({
     required: true,
     min: 5,
   },
+  contact: {
+    type: String,
+    required: true,
+    min: 1,
+  },
+  likedMovies: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Movie",
+    },
+  ],
+  rentalHistory: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Rental",
+    },
+  ],
+  currentRental: [
+    {
+      rental: { type: mongoose.Schema.Types.ObjectId, ref: "Rental" },
+      movie: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Movie",
+      },
+      rentedOn: Date,
+    },
+  ],
+  isPrime: {
+    type: Boolean,
+    default: false,
+  },
   isAdmin: Boolean,
 });
 
 userSchema.methods.generateAuthToken = function () {
   const token = jwt.sign(
-    { _id: this._id, isAdmin: this.isAdmin, name: this.name },
+    {
+      _id: this._id,
+      isAdmin: this.isAdmin,
+      isPrime: this.isPrime,
+      name: this.name,
+    },
     secretKey
   );
   return token;
 };
 
 const User = new mongoose.model("User", userSchema);
+
+async function validateUserId(userId) {
+  const schema = Joi.object({
+    userId: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .message("Invalid User Id "),
+  });
+
+  try {
+    await schema.validateAsync({ userId });
+  } catch (error) {
+    return error;
+  }
+}
 
 async function validateUser(user) {
   const schema = Joi.object({
@@ -48,6 +100,10 @@ async function validateUser(user) {
       .required()
       .min(5)
       .message("password must be atleast 5 characters"),
+    contact: Joi.string()
+      .required()
+      .min(1)
+      .message("contact number is required."),
   });
 
   try {
@@ -77,6 +133,7 @@ async function checkPassword(inputPassword, hashedPassword) {
 }
 
 exports.User = User;
+exports.validateUserId = validateUserId;
 exports.validateUser = validateUser;
 exports.hashPassword = hashPassword;
 exports.checkPassword = checkPassword;

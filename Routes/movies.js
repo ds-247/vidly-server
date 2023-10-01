@@ -5,12 +5,12 @@ const { Genre } = require("../models/genre");
 const express = require("express");
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", [auth,admin], async (req, res) => {
   const allMovies = await Movie.find().sort("title");
   res.status(200).send(allMovies);
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id",[auth,admin], async (req, res) => {
   const err = await validateMovieId(req.params.id);
   if (err) return res.status(400).send("Invalid Movie Id...");
 
@@ -19,7 +19,7 @@ router.get("/:id", async (req, res) => {
   res.status(200).send(movie);
 });
 
-router.post("/", auth, async (req, res) => {
+router.post("/", [auth,admin], async (req, res) => {
   const error = await validateMovie(req.body);
   if (error) res.status(400).send(error.details[0].message);
 
@@ -28,6 +28,7 @@ router.post("/", auth, async (req, res) => {
 
   const newMovie = new Movie({
     title: req.body.title,
+    movieImage: req.body.movieImage,
     genre: genre,
     dailyRentalRate: req.body.dailyRentalRate,
     numberInStock: req.body.numberInStock,
@@ -37,7 +38,7 @@ router.post("/", auth, async (req, res) => {
   res.send(result);
 });
 
-router.put("/:id", auth, async (req, res) => {
+router.put("/:id", [auth, admin], async (req, res) => {
   const err = await validateMovieId(req.params.id);
   if (err) return res.status(400).send("Invalid Movie Id...");
 
@@ -51,15 +52,15 @@ router.put("/:id", auth, async (req, res) => {
   const genre = await Genre.findById(req.body.genreId);
   if (!genre) return res.status(400).send("Invalid Genre id ....");
 
-  const likedValue =
-    req.body.liked !== undefined ? req.body.liked : movie.liked;
+  const primeValue =
+    req.body.prime !== undefined ? req.body.prime : movie.prime;
 
   movie.set({
     title: req.body.title,
     genre: genre,
     dailyRentalRate: req.body.dailyRentalRate,
     numberInStock: req.body.numberInStock,
-    liked: likedValue,
+    prime: primeValue,
   });
 
   await movie.save();

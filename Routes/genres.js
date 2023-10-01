@@ -4,12 +4,12 @@ const { Genre, validateGenre, validateGenreId } = require("../models/genre");
 const express = require("express");
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  const allGenres = await Genre.find().sort("name");
+router.get("/", [auth, admin], async (req, res) => {
+  const allGenres = await Genre.find().select("name _id").sort("name");
   res.status(200).send(allGenres);
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", [auth, admin], async (req, res) => {
   const error = await validateGenreId(req.params.id);
   if (error) return res.status(400).send(err.details[0].message);
 
@@ -19,7 +19,7 @@ router.get("/:id", async (req, res) => {
   res.status(200).send(genre);
 });
 
-router.post("/", async (req, res) => {
+router.post("/", [auth, admin], async (req, res) => {
   const error = await validateGenre(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -31,7 +31,7 @@ router.post("/", async (req, res) => {
   res.send(result);
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", [auth, admin], async (req, res) => {
   const err = await validateGenreId(req.params.id);
   if (err) return res.status(400).send(err.details[0].message);
 
@@ -51,7 +51,7 @@ router.put("/:id", async (req, res) => {
   res.send(genre);
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", [auth, admin], async (req, res) => {
   const err = await validateGenreId(req.params.id);
   if (err) return res.status(400).send(err.details[0].message);
 

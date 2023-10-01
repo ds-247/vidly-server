@@ -1,40 +1,23 @@
 const Joi = require("joi");
+// const { User } = require("./user");
+// const { Movie } = require('./movie');
 const mongoose = require("mongoose");
 
 const rentalSchema = new mongoose.Schema({
-  customer: {
-    type: new mongoose.Schema({
-      name: { type: String, minlength: 3, maxlength: 50, required: true },
-      isGold: {
-        required: true,
-        type: Boolean,
-        default: false,
-      },
-      phone: {
-        type: String,
-        validate: {
-          validator: function (v) {
-            return /^[0-9]{5}$/.test(v);
-          },
-          message: (props) => `${props.value} is not a valid phone number!`,
-        },
-      },
-    }),
-    require: true,
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
   },
   movie: {
-    type: new mongoose.Schema({
-      title: { type: String, required: true, minlength: 3, maxlength: 20 },
-      dailyRentalRate: { type: Number, required: true, min: 0, max: 100 },
-    }),
-    required: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Movie',
   },
-  dateOut: {
+  rentedOn: {
     type: Date,
     required: true,
     default: Date.now,
   },
-  dateReturned: { type: Date },
+  returnedOn: { type: Date },
   rentalFee: { type: Number, min: 0 },
 });
 
@@ -50,6 +33,9 @@ async function validateRental(rental) {
       .required()
       .regex(/^[0-9a-fA-F]{24}$/)
       .message("Movie Id must be a valid ObjectId"),
+    rentedOn: Joi.date(),
+    returnedOn: Joi.date().allow(null),
+    rentalFee: Joi.number().min(0),
   });
 
   try {

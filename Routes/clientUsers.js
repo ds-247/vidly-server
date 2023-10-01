@@ -1,26 +1,17 @@
-const admin = require('../middleware/admin')
+const logger = require("../startup/logger");
 const auth = require("../middleware/auth");
-const {
-  User,
-  validateUser,
-  validateUserId,
-  hashPassword,
-} = require("../models/user");
+const { User, validateUser, hashPassword } = require("../models/user");
+const { Movie, validateMovieId } = require("../models/movie");
 const express = require("express");
 const router = express.Router();
 const _ = require("lodash");
-
-router.get("/", [auth,admin], async (req, res) => {
-  const allUsers = await User.find().select("-password");
-  res.send(allUsers);
-});
 
 router.get("/me", [auth], async (req, res) => {
   const user = await User.findById(req.user._id).select("-password");
   res.send(user);
 });
 
-router.post("/", [auth], async (req, res) => {
+router.post("/", async (req, res) => {
   const error = await validateUser(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -29,7 +20,12 @@ router.post("/", [auth], async (req, res) => {
 
   user = new User(_.pick(req.body, ["name", "password", "email", "contact"]));
 
+  user.likedMovies = [];
+  user.rentalHistory = [];
+  user.currentRentals = [];
+
   const plaintextPassword = req.body.password;
+
   try {
     user.password = await hashPassword(plaintextPassword);
     await user.save();
@@ -41,19 +37,28 @@ router.post("/", [auth], async (req, res) => {
       .send(_.pick(user, ["name", "email"]));
   } catch (error) {
     logger.error("Error hashing password:", error);
-    return res.status(500).send("Something Wrong happened Try again");
+    return res.status(500).send(`Error creating user: ${error.message}`);
   }
 });
 
-router.delete("/:id", [auth,admin], async (req, res) => {
-  const error = await validateUserId(req.params.id);
-  if (error) return res.status(400).send(err.details[0].message);
 
-  const user = await User.findByIdAndDelete(req.params.id);
-  if (!user)
-    return res.status(404).send("The user with the given ID was not found...");
+router.put("/like/:id",[auth], async (req, res) => {
+  const error = await validateMovieId(req.params.id);
+  if (error) res.status(400).send(error.details[0].message);
 
-  res.status(200).send(user);
+  const movie = await Movie.findById(req.params.id);
+  if (!movie) res.status(404).send("Movie does not exists.");
+
+  const userId = req.user._id; // inside the model add user _id property while creating jwt
+
+  let user = await User.findById(userId);
+  if (!user) res.status(404).send("User not found ...");
+
+  user.likedMovies.push(req.params.id);
+
+  await user.save();
+
+  return res.status(200).json({ message: "Movie liked successfully.", user });
 });
 
 module.exports = router;

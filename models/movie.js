@@ -10,6 +10,10 @@ const movieSchema = new mongoose.Schema({
     maxlength: 50,
     required: true,
   },
+  movieImage: {
+    type: String, 
+    required : true,
+  },
   genre: {
     type: genreSchema,
     required: true,
@@ -26,7 +30,7 @@ const movieSchema = new mongoose.Schema({
     max: 100,
     required: true,
   },
-  liked: {
+  prime: {
     type: Boolean,
     default: false,
   },
@@ -51,10 +55,11 @@ async function validateMovieId(movieId) {
 async function validateMovie(movie) {
   const schema = Joi.object({
     title: Joi.string().min(3).required(),
+    movieImage: Joi.string().required().label("Movie Image"),
     genreId: Joi.string().required(),
     dailyRentalRate: Joi.number().min(0).max(500).required(),
-    numberInStock: Joi.number().integer().min(0).max(100),
-    liked: Joi.boolean(),
+    numberInStock: Joi.number().integer().min(0).max(100).required(),
+    prime: Joi.boolean(),
   });
 
   try {
