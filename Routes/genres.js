@@ -4,12 +4,12 @@ const { Genre, validateGenre, validateGenreId } = require("../models/genre");
 const express = require("express");
 const router = express.Router();
 
-router.get("/", [auth, admin], async (req, res) => {
+router.get("/", async (req, res) => {
   const allGenres = await Genre.find().select("name _id").sort("name");
   res.status(200).send(allGenres);
 });
 
-router.get("/:id", [auth, admin], async (req, res) => {
+router.get("/:id", async (req, res) => {
   const error = await validateGenreId(req.params.id);
   if (error) return res.status(400).send(err.details[0].message);
 

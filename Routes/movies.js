@@ -5,12 +5,12 @@ const { Genre } = require("../models/genre");
 const express = require("express");
 const router = express.Router();
 
-router.get("/", [auth,admin], async (req, res) => {
+router.get("/", async (req, res) => {
   const allMovies = await Movie.find().sort("title");
   res.status(200).send(allMovies);
 });
 
-router.get("/:id",[auth,admin], async (req, res) => {
+router.get("/:id", async (req, res) => {
   const err = await validateMovieId(req.params.id);
   if (err) return res.status(400).send("Invalid Movie Id...");
 
