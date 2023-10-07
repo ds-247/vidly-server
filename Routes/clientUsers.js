@@ -31,28 +31,27 @@ router.post("/", async (req, res) => {
     await user.save();
 
     const token = user.generateAuthToken();
-    res
+    return res
       .header("x-auth-token", token)
       .header("access-control-expose-headers", "x-auth-token")
-      .send(_.pick(user, ["name", "email"]));
+      .send(_.pick(user, ["name", "email", "contact"]));
   } catch (error) {
     logger.error("Error hashing password:", error);
     return res.status(500).send(`Error creating user: ${error.message}`);
   }
 });
 
-
-router.put("/like/:id",[auth], async (req, res) => {
+router.put("/like/:id", [auth], async (req, res) => {
   const error = await validateMovieId(req.params.id);
-  if (error) res.status(400).send(error.details[0].message);
+  if (error) return res.status(400).send(error.details[0].message);
 
   const movie = await Movie.findById(req.params.id);
-  if (!movie) res.status(404).send("Movie does not exists.");
+  if (!movie) return res.status(404).send("Movie does not exists.");
 
   const userId = req.user._id; // inside the model add user _id property while creating jwt
 
   let user = await User.findById(userId);
-  if (!user) res.status(404).send("User not found ...");
+  if (!user) return res.status(404).send("User not found ...");
 
   user.likedMovies.push(req.params.id);
 

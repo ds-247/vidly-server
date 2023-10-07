@@ -1,6 +1,4 @@
 const Joi = require("joi");
-// const { Movie } = require("../models/movie");
-// const { Rental } = require("../models/rental");
 const jwt = require("jsonwebtoken");
 const secretKey = process.env.SECRET_KEY;
 const mongoose = require("mongoose");
@@ -39,14 +37,10 @@ const userSchema = new mongoose.Schema({
       ref: "Rental",
     },
   ],
-  currentRental: [
+  currentRentals: [
     {
-      rental: { type: mongoose.Schema.Types.ObjectId, ref: "Rental" },
-      movie: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Movie",
-      },
-      rentedOn: Date,
+      rentalId: { type: mongoose.Schema.Types.ObjectId, ref: "Rental" },
+      movieId: { type: mongoose.Schema.Types.ObjectId, ref: "Movie" }, //for searching purpose
     },
   ],
   isPrime: {

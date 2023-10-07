@@ -12,7 +12,7 @@ router.get("/:id", async (req, res) => {
   if (err) return res.status(400).send("Invalid Movie Id...");
 
   const movie = await Movie.findById(req.params.id);
-  if (!movie) res.status(400).send("Movie doesn't existed...");
+  if (!movie) return res.status(400).send("Movie doesn't existed...");
   res.status(200).send(movie);
 });
 

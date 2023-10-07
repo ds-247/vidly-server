@@ -1,33 +1,71 @@
 const logger = require("../startup/logger");
 const auth = require("../middleware/auth");
 const { Rental } = require("../models/rental");
-const { User, validateUser, hashPassword } = require("../models/user");
-const { Movie, validateMovie, validateMovieId } = require("../models/movie");
+const { User, validateUserId } = require("../models/user");
+const { Movie, validateMovieId } = require("../models/movie");
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const _ = require("lodash");
+
+router.get("/prevRentals", [auth], async (req, res) => {
+  const userId = req.user._id;
+
+  const ex = await validateUserId(userId);
+  if (ex) return res.status(400).send(ex.details[0].message);
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ error: "User not found." });
+
+  const prevRentalArray = user.rentalHistory;
+  const rentalIdArray = prevRentalArray.map((obj) => obj._id);
+
+  const rentals = await Rental.find({ _id: { $in: rentalIdArray } });
+  res.send(rentals);
+});
+
+router.get("/currentRentals", [auth], async (req, res) => {
+  const userId = req.user._id;
+
+  const ex = await validateUserId(userId);
+  if (ex) return res.status(400).send(ex.details[0].message);
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ error: "User not found." });
+
+  const curRentalArray = user.currentRentals;
+  const rentalIdArray = curRentalArray.map((obj) => obj.rentalId);
+
+  const rentals = await Rental.find({ _id: { $in: rentalIdArray } });
+  res.send(rentals);
+});
 
 // Rent a movie
 router.put("/rent/:id", [auth], async (req, res) => {
-  const error = await validateMovieId(req.params.id);
-  if (error) res.status(400).send(error.details[0].message);
+  const movieId = req.params.id;
 
-  const movie = await Movie.findById(req.params.id);
-  if (!movie) res.status(404).send("Movie does not exist.");
+  const error = await validateMovieId(movieId);
+  if (error) return res.status(400).send(error.details[0].message);
+
+  const movie = await Movie.findById(movieId);
+  if (!movie) return res.status(404).send("Movie does not exist.");
 
   const userId = req.user._id; // Inside the model, add user _id property while creating jwt
+
+  const ex = await validateUserId(userId);
+  if (ex) return res.status(400).send(ex.details[0].message);
 
   const user = await User.findById(userId);
   if (!user) return res.status(404).json({ error: "User not found." });
 
   const { numberInStock } = movie;
-  if (numberInStock === 0) res.send("Out of Stock...");
-
-  const curRentalArray = user.currentRentals;
+  if (numberInStock === 0) return res.send("Out of Stock...");
 
   // Filter the array to check if the movie is already rented
+  const curRentalArray = user.currentRentals;
+
   const alreadyRented = curRentalArray.find(
-    (arr) => arr.movie.toString() === req.params.id
+    (arr) => arr.movieId.toString() === movieId
   );
 
   if (alreadyRented)
@@ -35,8 +73,10 @@ router.put("/rent/:id", [auth], async (req, res) => {
 
   const newRental = new Rental({
     userId: userId,
-    movieId: req.params.id,
-    rentedOn: Date.now(),
+    movieId: movieId,
+    movieTitle: movie.title,
+    rentedOn: new Date().toISOString().substring(0, 10),
+    rate: movie.dailyRentalRate,
   });
 
   const session = await mongoose.startSession();
@@ -49,10 +89,10 @@ router.put("/rent/:id", [auth], async (req, res) => {
     await movie.save();
 
     user.currentRentals.push({
-      movie: req.params.id,
-      rentedOn: Date.now,
+      movieId: movieId,
       rentalId: newRental._id,
     });
+
     await user.save();
 
     res.status(200).send(newRental);
@@ -64,46 +104,53 @@ router.put("/rent/:id", [auth], async (req, res) => {
   }
 });
 
+// instead of searching movie from database search from the currentrentals
+
 // Return a movie
 router.put("/return/:id", [auth], async (req, res) => {
-  const error = await validateMovieId(req.params.id);
-  if (error) res.status(400).send(error.details[0].message);
+  const movieId = req.params.id;
 
-  const movie = await Movie.findById(req.params.id);
-  if (!movie) res.status(404).send("Movie does not exists.");
+  const error = await validateMovieId(movieId);
+  if (error) return res.status(400).send(error.details[0].message);
+
+  const movie = await Movie.findById(movieId);
+  if (!movie) return res.status(404).send("Movie does not exists.");
 
   const userId = req.user._id;
-  let user = await User.findById(userId);
-  if (!user) res.status(404).send("User not found ...");
 
-  const curRentalArray = user.currentRentals;
+  let user = await User.findById(userId);
+  if (!user) return res.status(404).send("User not found ...");
 
   // Filter the array to check if the movie is already rented
+  const curRentalArray = user.currentRentals;
+
   const alreadyRented = curRentalArray.find(
-    (arr) => arr.movie.toString() === req.params.id
+    (arr) => arr.movieId.toString() === movieId
   );
 
   if (!alreadyRented)
     return res.status(400).json({ error: "Movie is not rented..." });
 
-  const rentalId = alreadyRented.rental;
+  const rentalId = alreadyRented.rentalId;
 
-  const rental = await Rental.findById(rentalId);
+  let rental = await Rental.findById(rentalId);
   if (!rental) return res.status(404).json({ error: "No records found." });
 
   const { rentedOn: start } = rental;
-  const end = Date.now();
+  const end = new Date().toISOString().substring(0, 10);
 
   const { dailyRentalRate: rate } = movie;
 
   // Calculate the rental duration in seconds
-  const durationInSeconds = (end - start) / 1000;
+  let duration = calculateRentalDuration(start, end);
+  duration = duration === 0 ? 1 : duration;
 
   // Calculate the rental fee
-  const amtPayable = durationInSeconds * rate;
+  const amtPayable = duration * rate;
 
   rental.returnedOn = end;
   rental.rentalFee = amtPayable;
+  rental.duration = duration;
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -113,7 +160,7 @@ router.put("/return/:id", [auth], async (req, res) => {
 
     // Update user's currentRentals array
     const updatedCurRentals = curRentalArray.filter(
-      (arr) => arr.movie.toString() !== req.params.id
+      (arr) => arr.movieId.toString() !== req.params.id
     );
     user.currentRentals = updatedCurRentals;
 
@@ -133,5 +180,33 @@ router.put("/return/:id", [auth], async (req, res) => {
     res.status(400).send(error.message);
   }
 });
+
+function calculateRentalDuration(rentedOn, returnedOn) {
+  // Convert the date strings to Date objects
+  const rentedDate = new Date(rentedOn);
+  const returnedDate = new Date(returnedOn);
+
+  // Calculate the time difference in milliseconds
+  const timeDifference = returnedDate - rentedDate;
+
+  // Calculate the number of days
+  const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+
+  return daysDifference;
+}
+
+function calculateRentalDuration(rentedOn, returnedOn) {
+  // Convert the date strings to Date objects
+  const rentedDate = new Date(rentedOn);
+  const returnedDate = new Date(returnedOn);
+
+  // Calculate the time difference in milliseconds
+  const timeDifference = returnedDate - rentedDate;
+
+  // Calculate the number of days
+  const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+
+  return daysDifference;
+}
 
 module.exports = router;

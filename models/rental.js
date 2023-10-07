@@ -1,23 +1,30 @@
 const Joi = require("joi");
-// const { User } = require("./user");
-// const { Movie } = require('./movie');
 const mongoose = require("mongoose");
 
 const rentalSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
   },
-  movie: {
+  movieId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Movie',
+    ref: "Movie",
+  },
+  movieTitle: {
+    type: String,
+    required: true,
   },
   rentedOn: {
-    type: Date,
+    type: String,
     required: true,
     default: Date.now,
   },
-  returnedOn: { type: Date },
+  rate: {
+    type: Number,
+    required: true,
+  },
+  returnedOn: { type: String },
+  duration: { type: Number },
   rentalFee: { type: Number, min: 0 },
 });
 
@@ -36,6 +43,7 @@ async function validateRental(rental) {
     rentedOn: Joi.date(),
     returnedOn: Joi.date().allow(null),
     rentalFee: Joi.number().min(0),
+    rate: Joi.number().required().min(1).message(rate),
   });
 
   try {
