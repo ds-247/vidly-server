@@ -12,10 +12,10 @@ router.get("/prevRentals", [auth], async (req, res) => {
   const userId = req.user._id;
 
   const ex = await validateUserId(userId);
-  if (ex) return res.status(400).send(ex.details[0].message);
+  if (ex) return res.status(400).send("Invalid User Id");
 
   const user = await User.findById(userId);
-  if (!user) return res.status(404).json({ error: "User not found." });
+  if (!user) return res.status(404).send("User not found ...");
 
   const prevRentalArray = user.rentalHistory;
   const rentalIdArray = prevRentalArray.map((obj) => obj._id);
@@ -31,7 +31,7 @@ router.get("/currentRentals", [auth], async (req, res) => {
   if (ex) return res.status(400).send(ex.details[0].message);
 
   const user = await User.findById(userId);
-  if (!user) return res.status(404).json({ error: "User not found." });
+  if (!user) return res.status(404).send("User not found...");
 
   const curRentalArray = user.currentRentals;
   const rentalIdArray = curRentalArray.map((obj) => obj.rentalId);
@@ -56,7 +56,7 @@ router.put("/rent/:id", [auth], async (req, res) => {
   if (ex) return res.status(400).send(ex.details[0].message);
 
   const user = await User.findById(userId);
-  if (!user) return res.status(404).json({ error: "User not found." });
+  if (!user) return res.status(404).send("User not Found...");
 
   const { numberInStock } = movie;
   if (numberInStock === 0) return res.send("Out of Stock...");
@@ -68,8 +68,7 @@ router.put("/rent/:id", [auth], async (req, res) => {
     (arr) => arr.movieId.toString() === movieId
   );
 
-  if (alreadyRented)
-    return res.status(400).json({ error: "Movie is already rented..." });
+  if (alreadyRented) return res.status(400).send("Movie is already rented...");
 
   const newRental = new Rental({
     userId: userId,
@@ -95,7 +94,7 @@ router.put("/rent/:id", [auth], async (req, res) => {
 
     await user.save();
 
-    res.status(200).send(newRental);
+    res.status(200).send("Rented Successfully");
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -128,13 +127,12 @@ router.put("/return/:id", [auth], async (req, res) => {
     (arr) => arr.movieId.toString() === movieId
   );
 
-  if (!alreadyRented)
-    return res.status(400).json({ error: "Movie is not rented..." });
+  if (!alreadyRented) return res.status(400).send("Movie is not rented...");
 
   const rentalId = alreadyRented.rentalId;
 
   let rental = await Rental.findById(rentalId);
-  if (!rental) return res.status(404).json({ error: "No records found." });
+  if (!rental) return res.status(404).send("No records found.");
 
   const { rentedOn: start } = rental;
   const end = new Date().toISOString().substring(0, 10);
